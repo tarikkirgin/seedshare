@@ -8,10 +8,6 @@
     <script src="https://cdn.jsdelivr.net/npm/downloadjs@1.4.7/download.min.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#000000" />
-    <meta
-      name="description"
-      content="Web site created using create-react-app"
-    />
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
     <!--
       manifest.json provides metadata used when your web app is installed on a
@@ -27,31 +23,9 @@
       work correctly both with client-side routing and a non-root public URL.
       Learn how to configure a non-root public URL by running `npm run build`.
     -->
-    <title>React App</title>
+    <title>SeedShare</title>
   </head>
   <body>
-    <script>
-      export function onDone() {
-        torrent.files.forEach((file) => {
-          // Check if the file is a binary file
-          if (file.length > 0) {
-            file.getBlob((err, blob) => {
-              if (err) {
-                console.error("Error getting blob", err);
-                return;
-              }
-              console.log(blob); // This should not be undefined now
-              //const blob = new Blob([data], { type: "text/plain" });
-              // log('(Blob URLs only work if the file is loaded from a server. "http//localhost" works. "file://" does not.)')
-              download(blob, file.name);
-              //log('<a href="' + blob + '">Download full file: ' + file.name + '</a>')
-            });
-          } else {
-            console.log("The file is not a binary file");
-          }
-        });
-      }
-    </script>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
     <!--
