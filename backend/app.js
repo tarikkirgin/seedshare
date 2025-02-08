@@ -2,8 +2,9 @@ const { ok } = require("assert");
 const express = require("express");
 const fs = require("fs").promises;
 const sqlite3 = require("sqlite3").verbose();
+var cors = require('cors')
 const app = express();
-const port = 3000;
+const port = 4000;
 
 
 function printDatabase() {
@@ -80,11 +81,12 @@ const db = new sqlite3.Database(":memory:", (err) => {
 });
 
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// app.use(express.urlencoded({ extended: true }));
+app.use(cors())
 
 app.post("/generateWords", async (req, res) => {
     const { inputString } = req.body;
-
+    console.log(req);
     if (!inputString || typeof inputString !== "string") {
         return res.status(400).json({ error: "Invalid input. Please provide a magnet link." });
     }
