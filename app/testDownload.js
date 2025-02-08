@@ -1,8 +1,10 @@
 import WebTorrent from 'webtorrent'
 
-const client = new WebTorrent()
+const client = new WebTorrent({
+    dht: false,   // Disable DHT
+});
 
-const magnetURI = 'magnet:?xt=urn:btih:a69159a263309805a3b92e2b2d10ff47ef79e897&dn=seed-me2.txt&tr=ws%3A%2F%2F149.102.154.203%3A44851'
+const magnetURI = 'magnet:?xt=urn:btih:846a1f85ad80def13115594dd16b4c7b3f6ca68a&dn=hi.txt&tr=ws%3A%2F%2F149.102.154.203%3A44851'
 
 console.log('Adding torrent with magnet URI:', magnetURI)
 
