@@ -14,7 +14,9 @@ import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { useState } from "react";
 
-export default function UploadModal() {
+import { Upload } from "lucide-react";
+
+export default function UploadModal({ setIsSeeding }) {
   const [files, setFiles] = useState([]);
 
   async function getWords(magnetURI) {
@@ -38,7 +40,7 @@ export default function UploadModal() {
 
   function onButtonClick() {
     if (window.WebTorrent) {
-      if (!files) return;
+      if (files.length === 0) return;
 
       const client = new WebTorrent({
         dht: false,
@@ -49,13 +51,17 @@ export default function UploadModal() {
       client.seed(files, { announce: customTrackers }, (torrent) => {
         getWords(torrent.magnetURI);
       });
+
+      setIsSeeding(true);
     }
   }
-
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline">Upload</Button>
+        <Button variant="tone">
+          <Upload />
+          Upload
+        </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
@@ -71,7 +77,7 @@ export default function UploadModal() {
           />
         </div>
         <DialogFooter className="sm:justify-end">
-          <Button type="button" onClick={onButtonClick}>
+          <Button type="button" variant="tone" onClick={onButtonClick}>
             Upload
           </Button>
         </DialogFooter>

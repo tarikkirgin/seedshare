@@ -30,6 +30,11 @@ module.exports = {
           DEFAULT: "hsl(var(--accent))",
           foreground: "hsl(var(--accent-foreground))",
         },
+
+        tone: {
+          DEFAULT: "hsl(var(--tone))",
+          foreground: "hsl(var(--tone-foreground))",
+        },
         popover: {
           DEFAULT: "hsl(var(--popover))",
           foreground: "hsl(var(--popover-foreground))",

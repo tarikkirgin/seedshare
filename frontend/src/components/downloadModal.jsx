@@ -1,36 +1,39 @@
 /* global WebTorrent, download */
+import { Button } from "./ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "./ui/dialog";
+import { Input } from "./ui/input";
+import { Download } from "lucide-react";
 
 export default function DownloadModal() {
-  function downloadTorrent(magnetURI) {
-    if (window.WebTorrent && window.download) {
-      const client = new WebTorrent({ dht: false });
-
-      client.add(magnetURI, function (torrent) {
-        torrent.on("done", () => {
-          torrent.files.forEach((file) => {
-            if (file.length > 0) {
-              file.getBlob((err, blob) => {
-                if (err) {
-                  console.error("Error getting blob", err);
-                  return;
-                }
-                console.log(blob);
-                download(blob, file.name);
-              });
-            } else {
-              console.log("The file is not a binary file");
-            }
-          });
-        });
-      });
-    } else {
-      console.error("Required libraries are not loaded");
-    }
-  }
-
   return (
-    <div>
-      <button onClick={downloadTorrent}>test</button>
-    </div>
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="tone">
+          <Download />
+          Download
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader className="flex">
+          <DialogTitle>Enter Link</DialogTitle>
+        </DialogHeader>
+        <DialogDescription>
+          Enter the 3 words to pair and receive files
+        </DialogDescription>
+        <div className="flex gap-2">
+          <Input type="text" placeholder="apple-shoe-cheese" />
+          <Button>Submit</Button>
+        </div>
+        <DialogFooter></DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
