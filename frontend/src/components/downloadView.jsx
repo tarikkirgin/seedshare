@@ -2,14 +2,13 @@ import { Button } from "./ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
 } from "./ui/card";
-import LoadingMain from "./loadingMain";
 import FileCard from "./fileCard";
-import { AlertCircle } from "lucide-react"; // Replaced Error with AlertCircle
+
+import { Loader2 } from "lucide-react";
 
 export default function DownloadView({ downloadInfo }) {
   const hasFiles = downloadInfo?.files?.length > 0;
@@ -23,10 +22,18 @@ export default function DownloadView({ downloadInfo }) {
         <div className="w-full ">
           {hasFiles ? (
             <>
-              <LoadingMain
-                size={downloadInfo.length}
-                count={downloadInfo.files.length}
-              />
+              <div>
+                <p className="text-sm">
+                  File count:{" "}
+                  <span className="font-bold">{downloadInfo.files.length}</span>
+                </p>
+                <p className="text-sm">
+                  Download size:{" "}
+                  <span className="font-bold">
+                    {Math.round(downloadInfo.length / 1024)} kilobytes
+                  </span>
+                </p>
+              </div>
               <div className="pt-4 flex flex-col overflow-y-auto max-h-96 gap-3">
                 {downloadInfo.files.map((file, index) => (
                   <FileCard
@@ -39,7 +46,9 @@ export default function DownloadView({ downloadInfo }) {
               </div>
             </>
           ) : (
-            <p>loading</p>
+            <div className="flex justify-center items-center">
+              <Loader2 className="animate-spin" />
+            </div>
           )}
         </div>
       </CardContent>

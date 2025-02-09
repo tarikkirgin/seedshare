@@ -12,7 +12,7 @@ export default function App() {
   const [downloadInfo, setDownloadInfo] = useState({});
 
   return (
-    <body className="relative flex flex-col justify-center items-center min-h-screen py-2 bg-white overflow-hidden">
+    <div className="relative flex flex-col justify-center items-center min-h-screen py-2 bg-white overflow-hidden">
       <main className="flex flex-col justify-center items-center">
         {state === "default" && (
           <>
@@ -86,6 +86,6 @@ export default function App() {
           }}
         />
       </div>
-    </body>
+    </div>
   );
 }
