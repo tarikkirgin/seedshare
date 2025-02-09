@@ -43,6 +43,30 @@ export default function App() {
             <DownloadView setState={setState} downloadInfo={downloadInfo} />
           </div>
         )}
+        <footer
+          className="text-gray-500 fixed bottom-0 z-10 p-2"
+          style={{
+            background:
+              "radial-gradient(closest-side, rgba(255,255,255,0.8) 30%, rgba(255,255,255,0.1) 70%, rgba(255,255,255,0) 100%)",
+          }}
+        >
+          Made with 💚 by{" "}
+          <a className="underline" href="https://github.com/tarikkirgin">
+            Tarik
+          </a>
+          ,{" "}
+          <a className="underline" href="https://github.com/ThomasCarey4">
+            Thomas
+          </a>
+          ,{" "}
+          <a className="underline" href="https://github.com/MiloSones">
+            Milo
+          </a>{" "}
+          &{" "}
+          <a className="underline" href="https://github.com/tomgregg61">
+            Tom
+          </a>
+        </footer>
       </main>
 
       <div className="absolute inset-0 z-0">
