@@ -12,7 +12,7 @@ export default function App() {
   const [downloadInfo, setDownloadInfo] = useState({});
 
   return (
-    <div className="relative flex flex-col justify-center items-center min-h-screen py-2 bg-white overflow-hidden">
+    <body className="relative flex flex-col justify-center items-center min-h-screen py-2 bg-white overflow-hidden">
       <main className="flex flex-col justify-center items-center">
         {state === "default" && (
           <>
@@ -44,7 +44,7 @@ export default function App() {
           </div>
         )}
         <footer
-          className="text-gray-500 fixed bottom-0 z-10 p-2"
+          className="text-gray-500 fixed bottom-0 z-10 p-2 break-words w-full text-center"
           style={{
             background:
               "radial-gradient(closest-side, rgba(255,255,255,0.8) 30%, rgba(255,255,255,0.1) 70%, rgba(255,255,255,0) 100%)",
@@ -86,6 +86,6 @@ export default function App() {
           }}
         />
       </div>
-    </div>
+    </body>
   );
 }
