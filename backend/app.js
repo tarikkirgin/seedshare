@@ -17,7 +17,6 @@ function printDatabase() {
     });
 }
 
-// Call this function after inserts for debugging
 
 
 function getRandomInt(min, max) {
@@ -97,6 +96,22 @@ app.post("/generateWords", async (req, res) => {
     }
 
     insertLink(words, inputString, res);
+});
+
+app.post("/getMagnet", async(req, res) => {
+    const { words } = req.body;
+    console.log(words);
+    if (!words || typeof words !== "string") {
+        return res.status(400).json({ error: "Invalid input. Please provide a magnet link." });
+    }
+    db.all("SELECT magnet FROM links WHERE words=(?) ", [words], (err, rows) => {
+        if (err) {
+            console.error("Error checking:", err);
+            return res.status(500).json({ error: "Database check failed" });
+        }
+
+        res.json({ success: true, magnet: rows });
+    });
 });
 
 app.get("/debug", async (req, res) => {
