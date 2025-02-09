@@ -109,8 +109,11 @@ app.post("/getMagnet", async(req, res) => {
             console.error("Error checking:", err);
             return res.status(500).json({ error: "Database check failed" });
         }
+        if (rows.length === 0) {
+            return res.status(500).json({ error: "Pairing words not found" });
+        }
         console.log(rows[0]["magnet"]);
-        res.json({ success: true, magnet: rows[0]["magnet"] });
+        return res.json({ success: true, magnet: rows[0]["magnet"] });
     });
 });
 
