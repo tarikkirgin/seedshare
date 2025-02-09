@@ -8,7 +8,7 @@ export default function FileCard({ filePath, fileSize, progress }) {
     <Card className={""}>
       <CardContent className={"px-4 py-2"}>
         <div className="flex flex-col gap-1">
-          <p>{filePath}</p>
+          <p className="line-clamp-2">{filePath}</p>
           <p className="text-sm">{(fileSize / 1023).toFixed(2)} KB</p>
         </div>
         <Progress
