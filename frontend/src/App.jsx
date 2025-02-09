@@ -7,6 +7,8 @@ import ShareCard from "components/shareCard";
 
 export default function App() {
   const [isSeeding, setIsSeeding] = useState(false);
+  const [pairingWords, setPairingWords] = useState("");
+
   return (
     <div className="relative flex flex-col items-center min-h-screen py-2 bg-white">
       <main className="flex flex-col justify-center items-center mt-40">
@@ -15,11 +17,14 @@ export default function App() {
         </h1>
         {!isSeeding ? (
           <div className="z-10 w-max flex flex-row gap-8 relative p-6 rounded-xl backdrop-blur-sm bg-white/30 border border-white/40 shadow-lg">
-            <UploadModal setIsSeeding={setIsSeeding} />
+            <UploadModal
+              setIsSeeding={setIsSeeding}
+              setPairingWords={setPairingWords}
+            />
             <DownloadModal />
           </div>
         ) : (
-          <ShareCard />
+          <ShareCard pairingWords={pairingWords} />
         )}
       </main>
 

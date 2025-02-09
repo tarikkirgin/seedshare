@@ -12,12 +12,11 @@ import { useState } from "react";
 
 import { Copy, Check } from "lucide-react";
 
-export default function ShareCard() {
+export default function ShareCard({ pairingWords }) {
   const [copied, setCopied] = useState(false);
-  const wordsToShare = "apple-concrete-tennis";
 
   const copyToClipboard = () => {
-    navigator.clipboard.writeText(wordsToShare);
+    navigator.clipboard.writeText(pairingWords);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -33,7 +32,7 @@ export default function ShareCard() {
       </CardHeader>
       <CardContent>
         <div className="flex flex-row gap-2">
-          <Input value={wordsToShare} readOnly className="flex-1" />
+          <Input value={pairingWords} readOnly className="flex-1" />
           <Button
             variant="outline"
             size="icon"
