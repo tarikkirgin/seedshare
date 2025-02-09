@@ -1,13 +1,11 @@
-import DownloadTorrent from "./components/downloadTorrent";
-import FileUpload from "./components/fileUpload";
+import DownloadModal from "./components/downloadModal";
+import UploadModal from "./components/uploadModal";
+import "./index.css";
 
 export default function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <FileUpload />
-        <DownloadTorrent />
-      </header>
+    <div className="">
+      <UploadModal />
     </div>
   );
 }

@@ -1,6 +1,6 @@
 /* global WebTorrent, download */
 
-export default function DownloadTorrent() {
+export default function DownloadModal() {
   function downloadTorrent(magnetURI) {
     if (window.WebTorrent && window.download) {
       const client = new WebTorrent({ dht: false });
