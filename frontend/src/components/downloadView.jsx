@@ -39,23 +39,7 @@ export default function DownloadView({ downloadInfo }) {
               </div>
             </>
           ) : (
-            <div className="border p-4 border-red-500 rounded-lg bg-red-600">
-              <div className="flex items-center gap-4 mb-3">
-                <AlertCircle className="text-white" size={32} />{" "}
-                <h2 className="text-2xl text-white font-semibold">
-                  Invalid Link
-                </h2>
-              </div>
-              <div className="flex flex-col gap-2">
-                <p className="text-white">
-                  This link is invalid; either the seeder disconnected or the
-                  time to live has expired.
-                </p>
-                <p className="text-white">
-                  Please contact the seeder to generate a new link.
-                </p>
-              </div>
-            </div>
+            <p>loading</p>
           )}
         </div>
       </CardContent>
