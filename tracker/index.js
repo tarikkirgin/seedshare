@@ -37,14 +37,14 @@ server.on('warning', function (err) {
 server.on('listening', function () {
   // Fired when all requested servers are listening
   const wsAddr = server.ws.address();
-  const wsHost = '149.102.154.203';
+  const wsHost = '127.0.0.1';
   const wsPort = wsAddr.port;
   console.log(`WebSocket tracker: ws://${wsHost}:${wsPort}`);
 });
 
 // Start the WebRTC tracker server. Use 0 to listen on a random free port.
-const port = 44851;  // Automatically choose a free port
-const hostname = '149.102.154.203';
+const port = 44951;  // Automatically choose a free port
+const hostname = '127.0.0.1';
 server.listen(port, hostname, () => {
   // Do something after the tracker starts listening
 });

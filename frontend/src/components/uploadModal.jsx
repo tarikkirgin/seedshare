@@ -48,7 +48,7 @@ export default function UploadModal({ setIsSeeding, setPairingWords }) {
         dht: false,
       });
 
-      const customTrackers = ["ws://thomascarey.co.uk:44851"];
+      const customTrackers = ["wss://seedshare.thomascarey.co.uk/tracker"];
 
       client.seed(files, { announce: customTrackers }, (torrent) => {
         getWords(torrent.magnetURI);
