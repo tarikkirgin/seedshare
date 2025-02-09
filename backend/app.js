@@ -33,7 +33,7 @@ async function getWordsFromFile(filePath) {
         }
 
         const words = [];
-        for (let i = 0; i < 4; i++) {
+        for (let i = 0; i < 3; i++) {
             words.push(jsonData.words[getRandomInt(0, jsonData.words.length - 1)]);
         }
 
