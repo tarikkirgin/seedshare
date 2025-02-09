@@ -15,11 +15,13 @@ import { useState } from "react";
 
 export default function DownloadModal({ setState, setDownloadInfo }) {
   const [pairingWords, setPairingWords] = useState("");
+  const [error, setError] = useState(false);
 
   function onInputChange(e) {
     const input = e.target.value;
-    // replace spaces with hyphens and maximum of three words
-    const cleanedInput = input.toLowerCase().replace(/\s+/g, "-");
+    // replace anything that isnt a lowercase letter or hyphen with nothing, turn spaces into hyphens
+    const cleanedInput = input.replace(/[^a-z-\s]/g, "").replace(/\s/g, "-");
+
     setPairingWords(cleanedInput);
   }
 
@@ -37,7 +39,10 @@ export default function DownloadModal({ setState, setDownloadInfo }) {
       );
 
       const data = await response.json();
-      // TODO: handle error case (no success)
+      if (!data.magnet) {
+        setError(true);
+        return;
+      }
       downloadTorrent(await data?.magnet);
     } catch (e) {
       console.error(e);
@@ -45,6 +50,9 @@ export default function DownloadModal({ setState, setDownloadInfo }) {
   }
 
   async function downloadTorrent(magnetURI) {
+    if (!magnetURI) {
+      return; // no magnet URI to download
+    }
     console.log("trying to download");
     if (window.WebTorrent && window.download) {
       const client = new WebTorrent({ dht: false });
@@ -78,10 +86,6 @@ export default function DownloadModal({ setState, setDownloadInfo }) {
 
         torrent.on("download", function (bytes) {
           setState("downloading");
-          // console.log("just downloaded: " + bytes);
-          // console.log("total downloaded: " + torrent.downloaded);
-          // console.log("download speed: " + torrent.downloadSpeed);
-          // console.log("progress: " + torrent.progress);
         });
       });
     } else {
@@ -90,7 +94,7 @@ export default function DownloadModal({ setState, setDownloadInfo }) {
   }
 
   return (
-    <Dialog>
+    <Dialog onOpenChange={() => setError(false)}>
       <DialogTrigger asChild>
         <Button variant="tone">
           <Download />
@@ -104,12 +108,14 @@ export default function DownloadModal({ setState, setDownloadInfo }) {
         <DialogDescription>
           Enter the 3 words to pair and receive files
         </DialogDescription>
-        <div className="flex items-center">
+        <div className="flex flex-col gap-2">
+          {error && <p className="text-red-500 text-sm">No file(s) found</p>}
           <Input
             type="text"
             placeholder="apple-shoe-cheese"
             onChange={onInputChange}
             value={pairingWords}
+            className={error ? "border-red-500" : ""}
           />
         </div>
         <DialogFooter className="sm:justify-end">
