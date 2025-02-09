@@ -38,6 +38,7 @@ export default function DownloadModal() {
   }
 
   async function downloadTorrent(magnetURI) {
+    console.log("trying to download");
     if (window.WebTorrent && window.download) {
       const client = new WebTorrent({ dht: false });
 
@@ -57,6 +58,13 @@ export default function DownloadModal() {
               console.log("The file is not a binary file");
             }
           });
+        });
+
+        torrent.on("download", function (bytes) {
+          console.log("just downloaded: " + bytes);
+          console.log("total downloaded: " + torrent.downloaded);
+          console.log("download speed: " + torrent.downloadSpeed);
+          console.log("progress: " + torrent.progress);
         });
       });
     } else {

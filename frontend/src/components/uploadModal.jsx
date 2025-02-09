@@ -52,6 +52,10 @@ export default function UploadModal({ setIsSeeding, setPairingWords }) {
 
       client.seed(files, { announce: customTrackers }, (torrent) => {
         getWords(torrent.magnetURI);
+
+        torrent.on("wire", function (wire, addr) {
+          console.log("connected to peer with address " + addr);
+        });
       });
 
       setIsSeeding(true);
