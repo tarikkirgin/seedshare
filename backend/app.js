@@ -80,12 +80,12 @@ const db = new sqlite3.Database(":memory:", (err) => {
 });
 
 app.use(express.json());
-// app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true }));
 app.use(cors())
 
 app.post("/generateWords", async (req, res) => {
     const { inputString } = req.body;
-    console.log(req);
+    console.log(req.body);
     if (!inputString || typeof inputString !== "string") {
         return res.status(400).json({ error: "Invalid input. Please provide a magnet link." });
     }
@@ -102,15 +102,15 @@ app.post("/getMagnet", async(req, res) => {
     const { words } = req.body;
     console.log(words);
     if (!words || typeof words !== "string") {
-        return res.status(400).json({ error: "Invalid input. Please provide a magnet link." });
+        return res.status(400).json({ error: "Invalid input. Please provide words" });
     }
     db.all("SELECT magnet FROM links WHERE words=(?) ", [words], (err, rows) => {
         if (err) {
             console.error("Error checking:", err);
             return res.status(500).json({ error: "Database check failed" });
         }
-
-        res.json({ success: true, magnet: rows });
+        console.log(rows[0]["magnet"]);
+        res.json({ success: true, magnet: rows[0]["magnet"] });
     });
 });
 
