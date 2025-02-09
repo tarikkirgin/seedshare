@@ -24,7 +24,10 @@ export default function DownloadModal({ setState, setDownloadInfo }) {
   function onInputChange(e) {
     const input = e.target.value;
     // replace anything that isnt a lowercase letter or hyphen with nothing, turn spaces into hyphens
-    const cleanedInput = input.replace(/[^a-z-\s]/g, "").replace(/\s/g, "-");
+    const cleanedInput = input
+      .toLowerCase()
+      .replace(/[^a-z-\s]/g, "")
+      .replace(/\s/g, "-");
 
     setPairingWords(cleanedInput);
   }
@@ -78,7 +81,7 @@ export default function DownloadModal({ setState, setDownloadInfo }) {
         setLoading(false);
         setShowWarning(true);
         return;
-      }, 10000);
+      }, 30000);
 
       client.add(magnetURI, { strategy: "rarest" }, function (torrent) {
         torrent.on("done", () => {
