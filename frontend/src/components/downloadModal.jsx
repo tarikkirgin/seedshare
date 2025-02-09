@@ -80,7 +80,7 @@ export default function DownloadModal({ setState, setDownloadInfo }) {
         return;
       }, 10000);
 
-      client.add(magnetURI, function (torrent) {
+      client.add(magnetURI, { strategy: "rarest" }, function (torrent) {
         torrent.on("done", () => {
           torrent.files.forEach((file) => {
             if (file.length > 0) {
