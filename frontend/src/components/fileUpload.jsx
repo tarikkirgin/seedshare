@@ -24,7 +24,7 @@ export default function FileUpload() {
 
 async function getWords(magnetURI) {
   try {
-    const response = await fetch("http://localhost:4000/generateWords", {
+    const response = await fetch("https://seedshare.thomascarey.co.uk/generateWords", {
       method: "POST",
       headers: {
         "Content-Type": "application/json", // Specify JSON content type
