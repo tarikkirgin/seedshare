@@ -21,7 +21,7 @@ export default function UploadModal({ setState, setPairingWords }) {
   async function getWords(magnetURI) {
     try {
       const response = await fetch(
-        "https://seedshare.thomascarey.co.uk/generateWords",
+        "http://localhost:4000/generateWords",
         {
           method: "POST",
           headers: {
@@ -47,7 +47,7 @@ export default function UploadModal({ setState, setPairingWords }) {
         dht: false,
       });
 
-      const customTrackers = ["wss://seedshare.thomascarey.co.uk/tracker", "wss://seedshare.thomascarey.co.uk/tracker2", "wss://seedshare.thomascarey.co.uk/tracker3"];
+      const customTrackers = ["ws://localhost:44951", "ws://localhost:44851", "ws://localhost:44751"];
 
       client.seed(files, { announce: customTrackers }, (torrent) => {
         getWords(torrent.magnetURI);

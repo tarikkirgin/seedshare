@@ -46,7 +46,7 @@ export default function DownloadModal({ setState, setDownloadInfo }) {
     setShowWarning(false);
     try {
       const response = await fetch(
-        "https://seedshare.thomascarey.co.uk/getMagnet",
+        "http://localhost:4000/getMagnet",
         {
           method: "POST",
           headers: {
