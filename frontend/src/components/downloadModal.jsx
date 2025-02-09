@@ -13,8 +13,15 @@ import { Input } from "./ui/input";
 import { Download } from "lucide-react";
 import { useState } from "react";
 
-export default function DownloadModal() {
+export default function DownloadModal({ setState, setDownloadInfo }) {
   const [pairingWords, setPairingWords] = useState("");
+
+  function onInputChange(e) {
+    const input = e.target.value;
+    // replace spaces with hyphens and maximum of three words
+    const cleanedInput = input.toLowerCase().replace(/\s+/g, "-");
+    setPairingWords(cleanedInput);
+  }
 
   async function onButtonClick() {
     try {
@@ -42,6 +49,10 @@ export default function DownloadModal() {
     if (window.WebTorrent && window.download) {
       const client = new WebTorrent({ dht: false });
 
+      setTimeout(() => {
+        setState("downloading");
+      }, 10000);
+
       client.add(magnetURI, function (torrent) {
         torrent.on("done", () => {
           torrent.files.forEach((file) => {
@@ -60,11 +71,17 @@ export default function DownloadModal() {
           });
         });
 
+        setInterval(() => {
+          setDownloadInfo({ ...torrent });
+          console.log("time", torrent.timeRemaining);
+        }, 1000);
+
         torrent.on("download", function (bytes) {
-          console.log("just downloaded: " + bytes);
-          console.log("total downloaded: " + torrent.downloaded);
-          console.log("download speed: " + torrent.downloadSpeed);
-          console.log("progress: " + torrent.progress);
+          setState("downloading");
+          // console.log("just downloaded: " + bytes);
+          // console.log("total downloaded: " + torrent.downloaded);
+          // console.log("download speed: " + torrent.downloadSpeed);
+          // console.log("progress: " + torrent.progress);
         });
       });
     } else {
@@ -87,14 +104,19 @@ export default function DownloadModal() {
         <DialogDescription>
           Enter the 3 words to pair and receive files
         </DialogDescription>
-        <div className="flex gap-2">
+        <div className="flex items-center">
           <Input
             type="text"
             placeholder="apple-shoe-cheese"
-            onChange={(e) => setPairingWords(e.target.value)}
+            onChange={onInputChange}
+            value={pairingWords}
           />
-          <Button onClick={onButtonClick}>Submit</Button>
         </div>
+        <DialogFooter className="sm:justify-end">
+          <Button type="button" variant="tone" onClick={onButtonClick}>
+            Submit
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

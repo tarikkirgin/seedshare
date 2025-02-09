@@ -16,7 +16,7 @@ import { useState } from "react";
 
 import { Upload } from "lucide-react";
 
-export default function UploadModal({ setIsSeeding, setPairingWords }) {
+export default function UploadModal({ setState, setPairingWords }) {
   const [files, setFiles] = useState([]);
 
   async function getWords(magnetURI) {
@@ -58,7 +58,7 @@ export default function UploadModal({ setIsSeeding, setPairingWords }) {
         });
       });
 
-      setIsSeeding(true);
+      setState("seeding");
     }
   }
   return (
