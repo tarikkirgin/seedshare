@@ -2,6 +2,7 @@
   import { goto } from '$app/navigation';
   import { peerState } from '$lib/store.svelte';
   import * as Registry from './registry/registry.remote';
+  import { Button } from 'bits-ui';
 
   let remoteCode = $state('');
   let fileInput: HTMLInputElement;
@@ -25,12 +26,12 @@
   <div class="bg-white rounded-2xl shadow-md p-8 w-full max-w-sm space-y-6">
     <h1 class="text-2xl font-bold text-center text-gray-800">File Share</h1>
 
-    <button
+    <Button.Root
       onclick={() => fileInput.click()}
       class="block w-full text-center bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 rounded-xl transition"
     >
       Send a file
-    </button>
+    </Button.Root>
 
     <div class="flex items-center gap-2">
       <hr class="flex-1 border-gray-200" />
@@ -45,13 +46,13 @@
         class="w-full border border-gray-300 rounded-xl px-4 py-3 text-center font-mono tracking-widest focus:outline-none focus:ring-2 focus:ring-blue-400"
         onkeydown={(e) => e.key === 'Enter' && join()}
       />
-      <button
+      <Button.Root
         onclick={join}
         disabled={!remoteCode.trim()}
         class="w-full bg-green-500 hover:bg-green-600 disabled:opacity-40 text-white font-medium py-3 rounded-xl transition"
       >
         Receive
-      </button>
+      </Button.Root>
     </div>
   </div>
 </main>
