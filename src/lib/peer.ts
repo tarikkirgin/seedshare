@@ -53,11 +53,8 @@ export function handleIncoming(
 	transfers: SvelteMap<string, Transfer>,
 	data: unknown
 ) {
-	console.log('handleIncoming');
-	console.log(data);
 	if (!conn) return;
 	if (Protocol.isMessage(data)) {
-		console.log('handling message');
 		handleMessage(conn, transfers, data);
 	}
 }
@@ -69,7 +66,6 @@ function handleMessage(
 ) {
 	const { transferId } = message;
 
-	console.log(message);
 	switch (message.type) {
 		case Protocol.MessageType.Metadata: {
 			const transfer: Transfer = {
@@ -120,7 +116,6 @@ async function receiveChunk(
 	transferId: string,
 	chunk: ArrayBuffer
 ) {
-	console.log('receive chunk');
 	const transfer = transfers.get(transferId);
 	if (!transfer) return;
 
