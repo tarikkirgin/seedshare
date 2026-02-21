@@ -137,7 +137,7 @@ export type Message =
 	| MessageData;
 
 function sendMessage(conn: DataConnection, msg: Message) {
-	conn.send(msg);
+	conn.send(msg, true); // TODO: need to look at, do we want everything chunked? or just data
 }
 
 export function isMessage(msg: unknown): msg is Message {

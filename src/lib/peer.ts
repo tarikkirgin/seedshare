@@ -34,41 +34,46 @@ export async function sendFile(conn: DataConnection, file: File) {
 		const slice = file.slice(offset, offset + CHUNK_SIZE);
 		const buffer = await slice.arrayBuffer();
 
-		conn.send(buffer, CHUNKED);
+		Protocol.sendData(conn, transferId, { chunk: buffer });
 
 		offset += CHUNK_SIZE;
 	}
 }
 
-export interface ReceivingState {
+export interface Transfer {
 	fileName: string;
 	fileSize: number;
 	chunks: ArrayBuffer[];
 	receivedBytes: number;
 	checksum: string;
+	completedFile?: File;
 }
 
 export function handleIncoming(
 	conn: DataConnection,
-	transfers: SvelteMap<string, ReceivingState>,
+	transfers: SvelteMap<string, Transfer>,
 	data: unknown
 ) {
+	console.log('handleIncoming');
+	console.log(data);
 	if (!conn) return;
 	if (Protocol.isMessage(data)) {
+		console.log('handling message');
 		handleMessage(conn, transfers, data);
 	}
 }
 
 function handleMessage(
 	conn: DataConnection,
-	transfers: SvelteMap<string, ReceivingState>,
+	transfers: SvelteMap<string, Transfer>,
 	message: Protocol.Message
 ) {
 	const { transferId } = message;
 
+	console.log(message);
 	switch (message.type) {
 		case Protocol.MessageType.Metadata: {
-			const transfer: ReceivingState = {
+			const transfer: Transfer = {
 				fileName: message.data.fileName,
 				fileSize: message.data.fileSize,
 				chunks: [],
@@ -112,64 +117,33 @@ function handleMessage(
 
 function receiveChunk(
 	conn: DataConnection,
-	transfers: SvelteMap<string, ReceivingState>,
+	transfers: SvelteMap<string, Transfer>,
 	transferId: string,
 	chunk: ArrayBuffer
 ) {
 	const transfer = transfers.get(transferId);
 	if (!transfer) return;
 
-	const updated: ReceivingState = {
+	const updated: Transfer = {
 		...transfer,
 		chunks: [...transfer.chunks, chunk],
 		receivedBytes: transfer.receivedBytes + chunk.byteLength
 	};
 
+  // TODO: multiple transfers does not work
 	transfers.set(transferId, updated);
 
 	if (updated.receivedBytes >= updated.fileSize) {
+		// we need to verify the checksum
 		Protocol.sendComplete(conn, transferId, { checksum: updated.checksum });
 		const blob = new Blob(updated.chunks);
 		const file = new File([blob], updated.fileName);
+		const completedTransfer: Transfer = {
+			...updated,
+			completedFile: file
+		};
+		transfers.set(transferId, completedTransfer);
 		console.log('[P2P] File received:', file);
 	}
 }
 
-// export function receiveFile(conn: DataConnection, onFileReceived: (file: File) => void) {
-// 	let chunks: ArrayBuffer[] = [];
-// 	let fileName = '';
-// 	let fileSize = 0;
-// 	let receivedBytes = 0;
-
-// 	conn.on('data', (data: unknown) => {
-// 		if (typeof data === 'string') {
-// 			try {
-// 				const msg = JSON.parse(data);
-// 				if (msg.meta) {
-// 					fileName = msg.fileName;
-// 					fileSize = msg.fileSize;
-// 					console.log(`[Meta] Expecting ${fileSize} bytes for ${fileName}`);
-// 				}
-// 			} catch {
-// 				console.warn('Invalid JSON control message');
-// 			}
-// 		} else if (data instanceof ArrayBuffer) {
-// 			chunks.push(data);
-// 			receivedBytes += data.byteLength;
-
-// 			// Check for completion
-// 			if (fileSize > 0 && receivedBytes >= fileSize) {
-// 				console.log(`[Complete] Received ${receivedBytes}/${fileSize} bytes`);
-// 				const blob = new Blob(chunks);
-// 				const file = new File([blob], fileName);
-// 				onFileReceived(file);
-
-// 				// Reset state for possible next transfer
-// 				chunks = [];
-// 				fileName = '';
-// 				fileSize = 0;
-// 				receivedBytes = 0;
-// 			}
-// 		}
-// 	});
-// }

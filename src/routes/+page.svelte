@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { type DataConnection } from 'peerjs';
-	import { type ReceivingState, createPeer, handleIncoming, sendFile } from '$lib/peer';
+	import { type Transfer, createPeer, handleIncoming, sendFile } from '$lib/peer';
 	import { SvelteMap } from 'svelte/reactivity';
 	import * as Registry from './registry/registry.remote';
 
-	let transfers = new SvelteMap<string, ReceivingState>();
+	let transfers = new SvelteMap<string, Transfer>();
 
 	let code = '';
 	let remoteCode = '';
@@ -78,6 +78,18 @@
 		console.log(`[P2P] Sending file: ${file.name}`);
 		await sendFile(conn, file);
 	}
+
+	function downloadFile(file: File | undefined) {
+		if (!file) {
+			return;
+		}
+		const url = URL.createObjectURL(file);
+		const a = document.createElement('a');
+		a.href = url;
+		a.download = file.name;
+		document.body.appendChild(a);
+		a.click();
+	}
 </script>
 
 <main class="mx-auto max-w-md space-y-6 rounded bg-gray-50 p-4 shadow">
@@ -116,7 +128,7 @@
 	<section class="space-y-2">
 		<h2 class="text-lg font-semibold">Send File</h2>
 		<div class="flex items-center gap-2">
-			<input type="file" class="flex-1" />
+			<input type="file" class="flex-1" multiple/>
 			<button
 				class="rounded bg-purple-500 px-4 py-2 text-white hover:bg-purple-600 disabled:opacity-50"
 				on:click={doSendFile}
@@ -136,9 +148,15 @@
 				{#each Array.from(transfers.values()) as t}
 					<li class="flex items-center justify-between rounded border p-2">
 						<span>{t.fileName}</span>
-						<span>
-							{Math.round((t.receivedBytes / t.fileSize) * 100)}%
-						</span>
+						<span>{Math.round((t.receivedBytes / t.fileSize) * 100)}%</span>
+						{#if t.completedFile}
+							<button
+								class="ml-2 rounded bg-indigo-500 px-3 py-1 text-white hover:bg-indigo-600"
+								on:click={() => downloadFile(t.completedFile)}
+							>
+								Download
+							</button>
+						{/if}
 					</li>
 				{/each}
 			</ul>
