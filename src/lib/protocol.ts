@@ -1,5 +1,7 @@
 import { type DataConnection } from 'peerjs';
 
+const CHUNKED = true;
+
 export enum MessageType {
 	Metadata = 'metadata',
 	Progress = 'progress',
@@ -137,7 +139,7 @@ export type Message =
 	| MessageData;
 
 function sendMessage(conn: DataConnection, msg: Message) {
-	conn.send(msg, true); // TODO: need to look at, do we want everything chunked? or just data
+	conn.send(msg, CHUNKED);
 }
 
 export function isMessage(msg: unknown): msg is Message {

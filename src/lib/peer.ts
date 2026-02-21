@@ -15,7 +15,6 @@ export function createPeer(options?: Partial<PeerOptions>) {
 	return new Peer(opts);
 }
 
-const CHUNKED = true;
 const CHUNK_SIZE = 16 * 1024;
 
 export async function sendFile(conn: DataConnection, file: File) {
@@ -115,12 +114,13 @@ function handleMessage(
 	}
 }
 
-function receiveChunk(
+async function receiveChunk(
 	conn: DataConnection,
 	transfers: SvelteMap<string, Transfer>,
 	transferId: string,
 	chunk: ArrayBuffer
 ) {
+	console.log('receive chunk');
 	const transfer = transfers.get(transferId);
 	if (!transfer) return;
 
@@ -130,20 +130,23 @@ function receiveChunk(
 		receivedBytes: transfer.receivedBytes + chunk.byteLength
 	};
 
-  // TODO: multiple transfers does not work
+	// TODO: multiple transfers does not work
 	transfers.set(transferId, updated);
 
 	if (updated.receivedBytes >= updated.fileSize) {
-		// we need to verify the checksum
 		Protocol.sendComplete(conn, transferId, { checksum: updated.checksum });
 		const blob = new Blob(updated.chunks);
 		const file = new File([blob], updated.fileName);
-		const completedTransfer: Transfer = {
-			...updated,
-			completedFile: file
-		};
-		transfers.set(transferId, completedTransfer);
-		console.log('[P2P] File received:', file);
+		const fileChecksum = await hashFile(file);
+		if (fileChecksum === updated.checksum) {
+			const completedTransfer: Transfer = {
+				...updated,
+				completedFile: file
+			};
+			transfers.set(transferId, completedTransfer);
+			console.log('[P2P] File received:', file);
+		} else {
+			console.error('[P2P] File checksum mismatch:', fileChecksum, '!=', updated.checksum);
+		}
 	}
 }
-
