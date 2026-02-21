@@ -125,7 +125,6 @@ async function receiveChunk(
 		receivedBytes: transfer.receivedBytes + chunk.byteLength
 	};
 
-	// TODO: multiple transfers does not work
 	transfers.set(transferId, updated);
 
 	if (updated.receivedBytes >= updated.fileSize) {

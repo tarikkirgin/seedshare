@@ -72,11 +72,14 @@
 		if (!conn) return;
 
 		const input = document.querySelector('input[type="file"]') as HTMLInputElement;
-		const file = input?.files?.[0];
-		if (!file) return;
+		const files = input?.files;
+		if (!files || files.length === 0) return;
 
-		console.log(`[P2P] Sending file: ${file.name}`);
-		await sendFile(conn, file);
+		for (let i = 0; i < files.length; i++) {
+			const file = files[i];
+			console.log(`[P2P] Sending file: ${file.name}`);
+			await sendFile(conn, file);
+		}
 	}
 
 	function downloadFile(file: File | undefined) {
@@ -128,7 +131,7 @@
 	<section class="space-y-2">
 		<h2 class="text-lg font-semibold">Send File</h2>
 		<div class="flex items-center gap-2">
-			<input type="file" class="flex-1" multiple/>
+			<input type="file" class="flex-1" multiple />
 			<button
 				class="rounded bg-purple-500 px-4 py-2 text-white hover:bg-purple-600 disabled:opacity-50"
 				on:click={doSendFile}
