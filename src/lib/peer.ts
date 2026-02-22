@@ -1,7 +1,9 @@
 import Peer, { type PeerOptions, type DataConnection } from 'peerjs';
 import * as Protocol from './protocol';
 import { hashFile } from './utils';
-import type { SvelteMap } from 'svelte/reactivity';
+import type { SenderFile, FileId } from './types';
+import { session } from './session.svelte';
+import * as Registry from '../routes/registry/registry.remote';
 
 export const defaultPeerOptions: PeerOptions = {
 	host: 'localhost',
@@ -11,136 +13,151 @@ export const defaultPeerOptions: PeerOptions = {
 };
 
 export function createPeer(options?: Partial<PeerOptions>) {
-	const opts: PeerOptions = { ...defaultPeerOptions, ...(options ?? {}) };
-	return new Peer(opts);
+	return new Peer({ ...defaultPeerOptions, ...(options ?? {}) });
+}
+
+export function setupSender(peer: Peer) {
+	peer.on('open', (id) => {
+		session.peerId = id;
+	});
+
+	peer.on('connection', (conn) => {
+		session.role = 'sender';
+		session.conn = conn;
+		session.connected = true;
+
+		conn.on('open', () => {
+			const files = Array.from(session.senderFiles.entries()).map(([id, f]) => ({
+				id,
+				name: f.name,
+				size: f.size,
+				type: f.file.type,
+				checksum: f.checksum
+			}));
+			Protocol.sendMetadata(conn, files);
+		});
+
+		conn.on('data', (data) => handleIncoming(conn, data));
+		conn.on('close', () => {
+			session.connected = false;
+			session.conn = null;
+		});
+		conn.on('error', (err) => console.error(err));
+	});
 }
 
 const CHUNK_SIZE = 16 * 1024;
 
-export async function sendFile(conn: DataConnection, file: File) {
-	const checksum = await hashFile(file);
-	const transferId = crypto.randomUUID();
-
-	Protocol.sendMetadata(conn, transferId, {
-		fileName: file.name,
-		fileSize: file.size,
-		fileType: file.type,
-		checksum: checksum
-	});
-
+export async function sendFile(conn: DataConnection, fileId: FileId, senderFile: SenderFile) {
+	const { file } = senderFile;
 	let offset = 0;
 	while (offset < file.size) {
-		const slice = file.slice(offset, offset + CHUNK_SIZE);
-		const buffer = await slice.arrayBuffer();
-
-		Protocol.sendData(conn, transferId, { chunk: buffer });
-
+		const buffer = await file.slice(offset, offset + CHUNK_SIZE).arrayBuffer();
+		Protocol.sendChunk(conn, fileId, buffer);
 		offset += CHUNK_SIZE;
 	}
 }
 
-export interface Transfer {
-	fileName: string;
-	fileSize: number;
-	chunks: ArrayBuffer[];
-	receivedBytes: number;
-	checksum: string;
-	completedFile?: File;
+export function handleIncoming(conn: DataConnection, data: unknown) {
+	console.log(data);
+	if (!Protocol.isMessage(data)) return;
+	handleMessage(conn, data);
 }
 
-export function handleIncoming(
-	conn: DataConnection,
-	transfers: SvelteMap<string, Transfer>,
-	data: unknown
-) {
-	if (!conn) return;
-	if (Protocol.isMessage(data)) {
-		handleMessage(conn, transfers, data);
+export async function setupReceiver(peer: Peer, code?: string) {
+	if (!code) return;
+	try {
+		const remoteId = await Registry.lookup(code);
+		if (!remoteId) return;
+		const c = peer.connect(remoteId);
+		session.conn = c;
+		c.on('open', () => {
+			session.connected = true;
+			c.on('data', (data) => handleIncoming(c, data));
+		});
+		c.on('close', () => {
+			session.connected = false;
+			session.conn = null;
+		});
+		c.on('error', (err) => console.error(err));
+	} catch (err) {
+		console.error('setupReceiver failed', err);
 	}
 }
 
-function handleMessage(
-	conn: DataConnection,
-	transfers: SvelteMap<string, Transfer>,
-	message: Protocol.Message
-) {
-	const { transferId } = message;
-
+function handleMessage(conn: DataConnection, message: Protocol.Message) {
 	switch (message.type) {
 		case Protocol.MessageType.Metadata: {
-			const transfer: Transfer = {
-				fileName: message.data.fileName,
-				fileSize: message.data.fileSize,
-				chunks: [],
-				receivedBytes: 0,
-				checksum: message.data.checksum
-			};
-
-			transfers.set(transferId, transfer);
+			for (const f of message.files) {
+				session.receiverFiles.set(f.id, {
+					name: f.name,
+					size: f.size,
+					checksum: f.checksum,
+					receivedBytes: 0,
+					chunks: []
+				});
+			}
 			break;
 		}
-
 		case Protocol.MessageType.Progress: {
-			const state = transfers.get(transferId);
-			if (state) state.receivedBytes = message.data.bytesReceived;
+			const file = session.receiverFiles.get(message.fileId);
+			if (!file) return;
+			file.receivedBytes = message.bytesReceived;
 			break;
 		}
-
-		case Protocol.MessageType.Data:
-			receiveChunk(conn, transfers, transferId, message.data.chunk);
+		case Protocol.MessageType.Chunk: {
+			receiveChunk(conn, message.fileId, message.chunk);
 			break;
-
+		}
 		case Protocol.MessageType.Complete: {
 			break;
 		}
-
-		case Protocol.MessageType.Cancel:
+		case Protocol.MessageType.Cancel: {
+			session.receiverFiles.delete(message.fileId);
 			break;
-
-		case Protocol.MessageType.Error:
-			console.error(`[${transferId}] ${message.data.code}: ${message.data.message}`);
+		}
+		case Protocol.MessageType.Error: {
+			console.error(`[${message.fileId}] ${message.code}: ${message.message}`);
 			break;
-
-		case Protocol.MessageType.Ping:
-			Protocol.sendPong(conn, transferId, { timestamp: message.data.timestamp });
+		}
+		case Protocol.MessageType.Ping: {
+			Protocol.sendPong(conn, message.timestamp);
 			break;
-
-		case Protocol.MessageType.Pong:
+		}
+		case Protocol.MessageType.Pong: {
 			break;
+		}
+		case Protocol.MessageType.Request: {
+			const file = session.senderFiles.get(message.fileId);
+			if (!file) return;
+			sendFile(conn, message.fileId, file);
+			break;
+		}
 	}
 }
 
-async function receiveChunk(
-	conn: DataConnection,
-	transfers: SvelteMap<string, Transfer>,
-	transferId: string,
-	chunk: ArrayBuffer
-) {
-	const transfer = transfers.get(transferId);
-	if (!transfer) return;
+async function receiveChunk(conn: DataConnection, fileId: string, chunk: ArrayBuffer) {
+	const file = session.receiverFiles.get(fileId);
+	if (!file) return;
 
-	const updated: Transfer = {
-		...transfer,
-		chunks: [...transfer.chunks, chunk],
-		receivedBytes: transfer.receivedBytes + chunk.byteLength
-	};
+	file.chunks.push(chunk);
+	file.receivedBytes += chunk.byteLength;
 
-	transfers.set(transferId, updated);
+	if (file.receivedBytes < file.size) {
+		Protocol.sendProgress(conn, fileId, file.receivedBytes, file.size);
+		return;
+	}
 
-	if (updated.receivedBytes >= updated.fileSize) {
-		Protocol.sendComplete(conn, transferId, { checksum: updated.checksum });
-		const blob = new Blob(updated.chunks);
-		const file = new File([blob], updated.fileName);
-		const fileChecksum = await hashFile(file);
-		if (fileChecksum === updated.checksum) {
-			const completedTransfer: Transfer = {
-				...updated,
-				completedFile: file
-			};
-			transfers.set(transferId, completedTransfer);
-			console.log('[P2P] File received:', file);
-		} else {
-			console.error('[P2P] File checksum mismatch:', fileChecksum, '!=', updated.checksum);
-		}
+	const blob = new Blob(file.chunks);
+	const assembledFile = new File([blob], file.name);
+	const checksum = await hashFile(assembledFile);
+
+	if (checksum === file.checksum) {
+		Protocol.sendComplete(conn, fileId, checksum);
+		file.file = assembledFile;
+		console.log('[P2P] File received:', file);
+	} else {
+		console.error('[P2P] Checksum mismatch:', checksum, '!=', file.checksum);
+		Protocol.sendError(conn, fileId, 'CHECKSUM_MISMATCH', 'File integrity check failed');
 	}
 }
