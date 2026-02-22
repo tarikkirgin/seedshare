@@ -1,4 +1,5 @@
 import { type DataConnection } from 'peerjs';
+import type { FileMetadata } from './types';
 
 const CHUNKED = true;
 
@@ -10,137 +11,107 @@ export enum MessageType {
 	Ping = 'ping',
 	Pong = 'pong',
 	Error = 'error',
-	Data = 'data'
+	Chunk = 'chunk',
+	Request = 'request'
 }
 
-export interface MessageBase {
-	type: MessageType;
-	transferId: string;
-	data: unknown;
-}
-
-export interface MessageMetadata extends MessageBase {
+export interface MetadataMessage {
 	type: MessageType.Metadata;
-	data: {
-		fileName: string;
-		fileSize: number;
-		fileType: string;
-		checksum: string;
-	};
+	files: FileMetadata[];
 }
 
-export function sendMetadata(
-	conn: DataConnection,
-	transferId: string,
-	data: MessageMetadata['data']
-) {
-	sendMessage(conn, { type: MessageType.Metadata, transferId, data });
-}
-
-export interface MessageProgress extends MessageBase {
-	type: MessageType.Progress;
-	data: {
-		bytesReceived: number;
-		bytesTotal: number;
-	};
-}
-
-export function sendProgress(
-	conn: DataConnection,
-	transferId: string,
-	data: MessageProgress['data']
-) {
-	sendMessage(conn, { type: MessageType.Progress, transferId, data });
-}
-
-export interface MessageComplete extends MessageBase {
-	type: MessageType.Complete;
-	data: {
-		checksum: string;
-	};
-}
-
-export function sendComplete(
-	conn: DataConnection,
-	transferId: string,
-	data: MessageComplete['data']
-) {
-	sendMessage(conn, { type: MessageType.Complete, transferId, data });
-}
-
-export interface MessageCancel extends MessageBase {
-	type: MessageType.Cancel;
-	data: {
-		reason: string;
-	};
-}
-
-export function sendCancel(conn: DataConnection, transferId: string, data: MessageCancel['data']) {
-	sendMessage(conn, { type: MessageType.Cancel, transferId, data });
-}
-
-export interface MessagePing extends MessageBase {
+export interface PingMessage {
 	type: MessageType.Ping;
-	data: {
-		timestamp: number;
-	};
+	timestamp: number;
 }
 
-export function sendPing(conn: DataConnection, transferId: string, data: MessagePing['data']) {
-	sendMessage(conn, { type: MessageType.Ping, transferId, data });
-}
-
-export interface MessagePong extends MessageBase {
+export interface PongMessage {
 	type: MessageType.Pong;
-	data: {
-		timestamp: number;
-	};
+	timestamp: number;
 }
 
-export function sendPong(conn: DataConnection, transferId: string, data: MessagePong['data']) {
-	sendMessage(conn, { type: MessageType.Pong, transferId, data });
+export interface ProgressMessage {
+	type: MessageType.Progress;
+	fileId: string;
+	bytesReceived: number;
+	bytesTotal: number;
 }
 
-export interface MessageError extends MessageBase {
+export interface CompleteMessage {
+	type: MessageType.Complete;
+	fileId: string;
+	checksum: string;
+}
+
+export interface CancelMessage {
+	type: MessageType.Cancel;
+	fileId: string;
+	reason: string;
+}
+
+export interface ErrorMessage {
 	type: MessageType.Error;
-	data: {
-		code: string;
-		message: string;
-	};
+	fileId: string;
+	code: string;
+	message: string;
 }
 
-export function sendError(conn: DataConnection, transferId: string, data: MessageError['data']) {
-	sendMessage(conn, { type: MessageType.Error, transferId, data });
+export interface ChunkMessage {
+	type: MessageType.Chunk;
+	fileId: string;
+	chunk: ArrayBuffer;
 }
 
-export interface MessageData extends MessageBase {
-	type: MessageType.Data;
-	data: {
-		chunk: ArrayBuffer;
-	};
-}
-
-export function sendData(conn: DataConnection, transferId: string, data: MessageData['data']) {
-	sendMessage(conn, {
-		type: MessageType.Data,
-		transferId,
-		data
-	});
+export interface RequestMessage {
+	type: MessageType.Request;
+	fileId: string;
 }
 
 export type Message =
-	| MessageMetadata
-	| MessageProgress
-	| MessageComplete
-	| MessageCancel
-	| MessagePing
-	| MessagePong
-	| MessageError
-	| MessageData;
+	| MetadataMessage
+	| PingMessage
+	| PongMessage
+	| ProgressMessage
+	| CompleteMessage
+	| CancelMessage
+	| ErrorMessage
+	| ChunkMessage
+	| RequestMessage;
 
-function sendMessage(conn: DataConnection, msg: Message) {
+function send(conn: DataConnection, msg: Message) {
 	conn.send(msg, CHUNKED);
 }
+
+export const sendMetadata = (conn: DataConnection, files: FileMetadata[]) =>
+	send(conn, { type: MessageType.Metadata, files });
+
+export const sendPing = (conn: DataConnection) =>
+	send(conn, { type: MessageType.Ping, timestamp: Date.now() });
+
+export const sendPong = (conn: DataConnection, timestamp: number) =>
+	send(conn, { type: MessageType.Pong, timestamp });
+
+export const sendProgress = (
+	conn: DataConnection,
+	fileId: string,
+	bytesReceived: number,
+	bytesTotal: number
+) => send(conn, { type: MessageType.Progress, fileId, bytesReceived, bytesTotal });
+
+export const sendComplete = (conn: DataConnection, fileId: string, checksum: string) =>
+	send(conn, { type: MessageType.Complete, fileId, checksum });
+
+export const sendCancel = (conn: DataConnection, fileId: string, reason: string) =>
+	send(conn, { type: MessageType.Cancel, fileId, reason });
+
+export const sendError = (conn: DataConnection, fileId: string, code: string, message: string) =>
+	send(conn, { type: MessageType.Error, fileId, code, message });
+
+export const sendChunk = (conn: DataConnection, fileId: string, chunk: ArrayBuffer) =>
+	send(conn, { type: MessageType.Chunk, fileId, chunk });
+
+export const sendRequest = (conn: DataConnection, fileId: string) =>
+	send(conn, { type: MessageType.Request, fileId });
 
 export function isMessage(msg: unknown): msg is Message {
 	if (typeof msg !== 'object' || msg === null) return false;

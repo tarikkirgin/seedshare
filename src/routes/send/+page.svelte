@@ -1,6 +1,5 @@
 <script lang="ts">
-	import { peerState, transfers } from '$lib/store.svelte';
-	import { sendFile } from '$lib/peer';
+	import { session } from '$lib/session.svelte';
 	import QRCode from '@castlenine/svelte-qrcode';
 	import FileIcon from '$lib/FileIcon.svelte';
 
@@ -8,39 +7,38 @@
 
 	let copied = false;
 	function handleCopy() {
-		navigator.clipboard.writeText(peerState.code);
+		navigator.clipboard.writeText(session.code);
 		copied = true;
 		setTimeout(() => (copied = false), 1200);
 	}
 
-	function handleAddFiles(event: Event) {
+	async function handleAddFiles(event: Event) {
 		const target = event.target as HTMLInputElement;
-		if (target.files) {
-			if (!peerState.pendingFiles) peerState.pendingFiles = [];
-			peerState.pendingFiles = [...peerState.pendingFiles, ...Array.from(target.files)];
-		}
-	}
+		if (!target.files || target.files.length === 0) return;
 
-	async function doSendFile() {
-		if (!peerState.conn || !peerState.pendingFiles) return;
-		for (let i = 0; i < peerState.pendingFiles.length; i++) {
-			await sendFile(peerState.conn, peerState.pendingFiles[i]);
+		for (const file of Array.from(target.files)) {
+			session.senderFiles.set(crypto.randomUUID(), {
+				file,
+				name: file.name,
+				size: file.size,
+				checksum: ''
+			});
 		}
-	}
 
-	doSendFile();
+		target.value = '';
+	}
 </script>
 
 <main class="flex min-h-screen items-center justify-center bg-gray-100">
 	<div class="w-full max-w-sm space-y-6 rounded-2xl bg-white p-8 shadow-md">
 		<h1 class="text-center text-2xl font-bold text-gray-800">Sending</h1>
 		<div class="align-items-center width-full height-full flex justify-center">
-			<QRCode data="http://localhost:5173/receive/{peerState.code}" />
+			<QRCode data="http://localhost:5173/receive/{session.code}" />
 		</div>
 		<div class="mt-2 flex items-center gap-2">
 			<input
 				type="text"
-				value={peerState.code}
+				value={session.code}
 				class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-600 focus:ring-2 focus:ring-blue-500 focus:outline-none"
 				readonly
 			/>
@@ -91,9 +89,9 @@
 			</button>
 		</div>
 
-		{#if peerState.pendingFiles}
+		{#if session.senderFiles.size > 0}
 			<ul class="space-y-1">
-				{#each peerState.pendingFiles as file}
+				{#each Array.from(session.senderFiles.entries()) as [id, file]}
 					<li
 						class="flex items-center truncate rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-600"
 					>
@@ -133,25 +131,6 @@
 					Add more files
 				</button>
 			</div>
-		{/if}
-
-		{#if transfers.size > 0}
-			<ul class="space-y-2">
-				{#each Array.from(transfers.values()) as t}
-					<li class="space-y-2 rounded-xl border border-gray-200 p-3">
-						<div class="flex justify-between text-sm text-gray-700">
-							<span class="truncate">{t.fileName}</span>
-							<span>{Math.round((t.receivedBytes / t.fileSize) * 100)}%</span>
-						</div>
-						<div class="h-2 w-full rounded-full bg-gray-100">
-							<div
-								class="h-2 rounded-full bg-blue-500 transition-all"
-								style="width: {Math.round((t.receivedBytes / t.fileSize) * 100)}%"
-							></div>
-						</div>
-					</li>
-				{/each}
-			</ul>
 		{/if}
 
 		<a href="/" class="block text-center text-sm text-gray-400 hover:text-gray-600">← Back</a>
