@@ -18,6 +18,9 @@ importers:
         specifier: ^1.2.0
         version: 1.2.0(typescript@5.9.3)
     devDependencies:
+      '@castlenine/svelte-qrcode':
+        specifier: ^2.3.0
+        version: 2.3.0(svelte@5.53.1)
       '@eslint/compat':
         specifier: ^2.0.2
         version: 2.0.2(eslint@10.0.1(jiti@2.6.1))
@@ -92,6 +95,11 @@ importers:
         version: 1.0.0(vite@7.3.1(@types/node@25.3.0)(jiti@2.6.1)(lightningcss@1.31.1))
 
 packages:
+
+  '@castlenine/svelte-qrcode@2.3.0':
+    resolution: {integrity: sha512-1YO6tL63gjbCuBkhd/PyMMFbjFD6gO6TJjvq5Ucfs5+0s13oDfiUyxO15kjR11enG7O/A2R0WBuc4bfdMqjTJQ==}
+    peerDependencies:
+      svelte: '>=3.54.0'
 
   '@esbuild/aix-ppc64@0.27.3':
     resolution: {integrity: sha512-9fJMTNFTWZMh5qwrBItuziu834eOCUcEqymSH7pY+zoMVEZg3gcPuBNxH1EvfVYe9h0x/Ptw8KBzv7qxb7l8dg==}
@@ -1500,6 +1508,10 @@ packages:
     resolution: {integrity: sha512-B58NGBEoc8Y9MWWCQGl/gq9xBCe4IiKM0a2x7GZdQKOW5Exr8S1W24J6OgM1njK8xCRGvAJIL/MxXHf6SkmQKQ==}
 
 snapshots:
+
+  '@castlenine/svelte-qrcode@2.3.0(svelte@5.53.1)':
+    dependencies:
+      svelte: 5.53.1
 
   '@esbuild/aix-ppc64@0.27.3':
     optional: true

@@ -10,7 +10,7 @@ export const peerState = $state({
   connected: false,
   code: '',
   peerId: '',
-  pendingFiles: null as FileList | null,
+  pendingFiles: null as File[] | null,
 });
 
 export const peer = createPeer();

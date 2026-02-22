@@ -1,64 +1,161 @@
 <script lang="ts">
-  import { peerState, transfers } from '$lib/store.svelte';
-  import { sendFile } from '$lib/peer';
+	import { peerState, transfers } from '$lib/store.svelte';
+	import { sendFile } from '$lib/peer';
+	import QRCode from '@castlenine/svelte-qrcode';
 
-  async function doSendFile() {
-    if (!peerState.conn || !peerState.pendingFiles) return;
-    for (let i = 0; i < peerState.pendingFiles.length; i++) {
-      await sendFile(peerState.conn, peerState.pendingFiles[i]);
-    }
-  }
+	let fileInput: HTMLInputElement | null = null;
+
+	let copied = false;
+	function handleCopy() {
+		navigator.clipboard.writeText(peerState.code);
+		copied = true;
+		setTimeout(() => (copied = false), 1200);
+	}
+
+	function handleAddFiles(event: Event) {
+		const target = event.target as HTMLInputElement;
+		if (target.files) {
+			if (!peerState.pendingFiles) peerState.pendingFiles = [];
+			peerState.pendingFiles = [...peerState.pendingFiles, ...Array.from(target.files)];
+		}
+	}
+
+	async function doSendFile() {
+		if (!peerState.conn || !peerState.pendingFiles) return;
+		for (let i = 0; i < peerState.pendingFiles.length; i++) {
+			await sendFile(peerState.conn, peerState.pendingFiles[i]);
+		}
+	}
+
+	doSendFile();
 </script>
 
-<main class="min-h-screen bg-gray-100 flex items-center justify-center">
-  <div class="bg-white rounded-2xl shadow-md p-8 w-full max-w-sm space-y-6">
-    <h1 class="text-2xl font-bold text-center text-gray-800">Sending</h1>
+<main class="flex min-h-screen items-center justify-center bg-gray-100">
+	<div class="w-full max-w-sm space-y-6 rounded-2xl bg-white p-8 shadow-md">
+		<h1 class="text-center text-2xl font-bold text-gray-800">Sending</h1>
+		<div class="align-items-center width-full height-full flex justify-center">
+			<QRCode data="http://localhost:5173/receive/{peerState.code}" />
+		</div>
+		<div class="mt-2 flex items-center gap-2">
+			<input
+				type="text"
+				value={peerState.code}
+				class="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-600 focus:ring-2 focus:ring-blue-500 focus:outline-none"
+				readonly
+			/>
 
-    <div class="text-center space-y-1">
-      <p class="text-sm text-gray-500">Share this code with the receiver</p>
-      <p class="font-mono text-3xl font-bold tracking-widest text-gray-800">{peerState.code}</p>
-    </div>
+			<button
+				type="button"
+				class="flex h-10 w-10 items-center rounded-lg border border-gray-200 bg-gray-50 px-2 py-1 text-sm text-gray-600 transition-colors hover:bg-gray-100"
+				on:click={handleCopy}
+				aria-label={copied ? 'Copied' : 'Copy code'}
+			>
+				{#if !copied}
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						class="h-4 w-4"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke="currentColor"
+					>
+						<rect
+							x="9"
+							y="9"
+							width="13"
+							height="13"
+							rx="2"
+							stroke-width="2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+						/>
+						<rect
+							x="3"
+							y="3"
+							width="13"
+							height="13"
+							rx="2"
+							stroke-width="2"
+							stroke-linecap="round"
+							stroke-linejoin="round"
+						/>
+					</svg>
+				{:else}
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						class="h-4 w-4 text-green-500"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke="currentColor"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M5 13l4 4L19 7"
+						/>
+					</svg>
+				{/if}
+			</button>
+		</div>
 
-    <div class="flex items-center gap-2 justify-center">
-      <div class="w-3 h-3 rounded-full {peerState.connected ? 'bg-green-400' : 'bg-yellow-400'}"></div>
-      <span class="text-sm text-gray-600">{peerState.connected ? 'Receiver connected' : 'Waiting for receiver...'}</span>
-    </div>
+		{#if peerState.pendingFiles}
+			<ul class="space-y-1">
+				{#each peerState.pendingFiles as file}
+					<li class="truncate rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-600">
+						{file.name}
+					</li>
+				{/each}
+			</ul>
+			<div class="mt-2 flex justify-end">
+				<input
+					type="file"
+					multiple
+					class="hidden"
+					bind:this={fileInput}
+					on:change={handleAddFiles}
+				/>
+				<button
+					type="button"
+					class="flex items-center gap-1 rounded-lg border border-gray-200 bg-gray-50 px-2 py-1 text-sm text-gray-600 hover:bg-gray-100"
+					on:click={() => fileInput && fileInput.click()}
+				>
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						class="h-4 w-4"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke="currentColor"
+						><path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							stroke-width="2"
+							d="M12 4v16m8-8H4"
+						/></svg
+					>
+					Add more files
+				</button>
+			</div>
+		{/if}
 
-    {#if peerState.pendingFiles}
-      <ul class="space-y-1">
-        {#each Array.from(peerState.pendingFiles) as file}
-          <li class="text-sm text-gray-600 border border-gray-200 rounded-lg px-3 py-2 truncate">{file.name}</li>
-        {/each}
-      </ul>
-    {/if}
+		{#if transfers.size > 0}
+			<ul class="space-y-2">
+				{#each Array.from(transfers.values()) as t}
+					<li class="space-y-2 rounded-xl border border-gray-200 p-3">
+						<div class="flex justify-between text-sm text-gray-700">
+							<span class="truncate">{t.fileName}</span>
+							<span>{Math.round((t.receivedBytes / t.fileSize) * 100)}%</span>
+						</div>
+						<div class="h-2 w-full rounded-full bg-gray-100">
+							<div
+								class="h-2 rounded-full bg-blue-500 transition-all"
+								style="width: {Math.round((t.receivedBytes / t.fileSize) * 100)}%"
+							></div>
+						</div>
+					</li>
+				{/each}
+			</ul>
+		{/if}
 
-    <button
-      onclick={doSendFile}
-      disabled={!peerState.connected}
-      class="w-full bg-blue-500 hover:bg-blue-600 disabled:opacity-40 text-white font-medium py-3 rounded-xl transition"
-    >
-      Send
-    </button>
-
-    {#if transfers.size > 0}
-      <ul class="space-y-2">
-        {#each Array.from(transfers.values()) as t}
-          <li class="border border-gray-200 rounded-xl p-3 space-y-2">
-            <div class="flex justify-between text-sm text-gray-700">
-              <span class="truncate">{t.fileName}</span>
-              <span>{Math.round((t.receivedBytes / t.fileSize) * 100)}%</span>
-            </div>
-            <div class="w-full bg-gray-100 rounded-full h-2">
-              <div
-                class="bg-blue-500 h-2 rounded-full transition-all"
-                style="width: {Math.round((t.receivedBytes / t.fileSize) * 100)}%"
-              ></div>
-            </div>
-          </li>
-        {/each}
-      </ul>
-    {/if}
-
-    <a href="/" class="block text-center text-sm text-gray-400 hover:text-gray-600">← Back</a>
-  </div>
+		<a href="/" class="block text-center text-sm text-gray-400 hover:text-gray-600">← Back</a>
+	</div>
 </main>
