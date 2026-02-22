@@ -2,6 +2,7 @@
 	import { peerState, transfers } from '$lib/store.svelte';
 	import { sendFile } from '$lib/peer';
 	import QRCode from '@castlenine/svelte-qrcode';
+	import FileIcon from '$lib/FileIcon.svelte';
 
 	let fileInput: HTMLInputElement | null = null;
 
@@ -93,7 +94,12 @@
 		{#if peerState.pendingFiles}
 			<ul class="space-y-1">
 				{#each peerState.pendingFiles as file}
-					<li class="truncate rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-600">
+					<li
+						class="flex items-center truncate rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-600"
+					>
+						<div class="mr-2 flex h-4 w-4 items-center justify-center">
+							<FileIcon fileName={file.name} />
+						</div>
 						{file.name}
 					</li>
 				{/each}
