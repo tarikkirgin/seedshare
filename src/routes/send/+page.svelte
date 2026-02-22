@@ -46,7 +46,7 @@
 
 			<button
 				type="button"
-				class="flex h-10 w-10 items-center rounded-lg border border-gray-200 bg-gray-50 px-2 py-1 text-sm text-gray-600 transition-colors hover:bg-gray-100"
+				class="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 bg-gray-50 p-1 text-sm text-gray-600 transition-colors hover:bg-gray-100"
 				on:click={handleCopy}
 				aria-label={copied ? 'Copied' : 'Copy code'}
 			>
@@ -58,25 +58,17 @@
 						viewBox="0 0 24 24"
 						stroke="currentColor"
 					>
-						<rect
-							x="9"
-							y="9"
-							width="13"
-							height="13"
-							rx="2"
-							stroke-width="2"
+						<path
 							stroke-linecap="round"
 							stroke-linejoin="round"
+							stroke-width="2"
+							d="M13.828 10.172a4 4 0 0 1 0 5.656l-3.536 3.536a4 4 0 0 1-5.656-5.656l3.536-3.536"
 						/>
-						<rect
-							x="3"
-							y="3"
-							width="13"
-							height="13"
-							rx="2"
-							stroke-width="2"
+						<path
 							stroke-linecap="round"
 							stroke-linejoin="round"
+							stroke-width="2"
+							d="M10.172 13.828a4 4 0 0 1 0-5.656l3.536-3.536a4 4 0 0 1 5.656 5.656l-3.536 3.536"
 						/>
 					</svg>
 				{:else}
