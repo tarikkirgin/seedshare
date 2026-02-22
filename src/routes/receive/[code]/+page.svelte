@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import { peer, session } from '$lib/store.svelte';
+	import { peer, session } from '$lib/session.svelte';
 	import { handleIncoming } from '$lib/peer';
 	import { sendRequest } from '$lib/protocol';
 	import * as Registry from '../../registry/registry.remote';
@@ -25,9 +25,9 @@
 		c.on('error', (err) => console.error(err));
 	}
 
-	function requestFile(transferId: string) {
+	function requestFile(fileId: string) {
 		if (!session.conn) return;
-		sendRequest(session.conn, transferId);
+		sendRequest(session.conn, fileId);
 	}
 
 	onMount(() => {
@@ -48,18 +48,18 @@
 			>
 		</div>
 
-		{#if session.transfers.size > 0}
+		{#if session.receiverFiles.size > 0}
 			<ul class="space-y-2">
-				{#each Array.from(session.transfers.entries()) as [id, t]}
+				{#each Array.from(session.receiverFiles.entries()) as [id, file]}
 					<li class="space-y-2 rounded-xl border border-gray-200 p-3">
 						<div class="flex justify-between text-sm text-gray-700">
-							<span class="truncate">{t.fileName}</span>
-							<span>{Math.round((t.receivedBytes / t.fileSize) * 100)}%</span>
+							<span class="truncate">{file.name}</span>
+							<span>{Math.round((file.receivedBytes / file.size) * 100)}%</span>
 						</div>
 						<div class="h-2 w-full rounded-full bg-gray-100">
 							<div
 								class="h-2 rounded-full bg-blue-500 transition-all"
-								style="width: {Math.round((t.receivedBytes / t.fileSize) * 100)}%"
+								style="width: {Math.round((file.receivedBytes / file.size) * 100)}%"
 							></div>
 						</div>
 						<button

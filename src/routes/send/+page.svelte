@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { session } from '$lib/store.svelte';
+	import { session } from '$lib/session.svelte';
+
 </script>
 
 <main class="flex min-h-screen items-center justify-center bg-gray-100">
@@ -20,12 +21,12 @@
 			>
 		</div>
 
-		{#if session.pendingFiles.size > 0}
+		{#if session.senderFiles.size > 0}
 			<ul class="space-y-2">
-				{#each Array.from(session.pendingFiles.entries()) as [id, f]}
+				{#each Array.from(session.senderFiles.entries()) as [id, file]}
 					<li class="space-y-2 rounded-xl border border-gray-200 p-3">
 						<div class="flex justify-between text-sm text-gray-700">
-							<span class="truncate">{f.name}</span>
+							<span class="truncate">{file.name}</span>
 						</div>
 					</li>
 				{/each}

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
-	import { session } from '$lib/store.svelte';
+	import { session } from '$lib/session.svelte';
 	import { SvelteMap } from 'svelte/reactivity';
 	import * as Registry from './registry/registry.remote';
 	import { Button } from 'bits-ui';
@@ -10,8 +10,16 @@
 
 	async function onFilesPicked() {
 		if (!fileInput.files || fileInput.files.length === 0) return;
-		session.pendingFiles = new SvelteMap(
-			Array.from(fileInput.files).map((file) => [crypto.randomUUID(), file])
+		session.senderFiles = new SvelteMap(
+			Array.from(fileInput.files).map((file) => [
+				crypto.randomUUID(),
+				{
+					file,
+					name: file.name,
+					size: file.size,
+					checksum: ''
+				}
+			])
 		);
 		session.code = await Registry.register(session.peerId);
 		goto('/send');
