@@ -1,58 +1,61 @@
 <script lang="ts">
-  import { goto } from '$app/navigation';
-  import { peerState } from '$lib/store.svelte';
-  import * as Registry from './registry/registry.remote';
-  import { Button } from 'bits-ui';
+	import { goto } from '$app/navigation';
+	import { session } from '$lib/store.svelte';
+	import { SvelteMap } from 'svelte/reactivity';
+	import * as Registry from './registry/registry.remote';
+	import { Button } from 'bits-ui';
 
-  let remoteCode = $state('');
-  let fileInput: HTMLInputElement;
+	let remoteCode = $state('');
+	let fileInput: HTMLInputElement;
 
-  async function onFilesPicked() {
-    if (!fileInput.files || fileInput.files.length === 0) return;
-    peerState.pendingFiles = fileInput.files;
-    peerState.code = await Registry.register(peerState.peerId);
-    goto('/send');
-  }
+	async function onFilesPicked() {
+		if (!fileInput.files || fileInput.files.length === 0) return;
+		session.pendingFiles = new SvelteMap(
+			Array.from(fileInput.files).map((file) => [crypto.randomUUID(), file])
+		);
+		session.code = await Registry.register(session.peerId);
+		goto('/send');
+	}
 
-  async function join() {
-    if (!remoteCode.trim()) return;
-    goto(`/receive/${remoteCode.trim()}`);
-  }
+	async function join() {
+		if (!remoteCode.trim()) return;
+		goto(`/receive/${remoteCode.trim()}`);
+	}
 </script>
 
 <input bind:this={fileInput} type="file" multiple class="hidden" onchange={onFilesPicked} />
 
-<main class="min-h-screen bg-gray-100 flex items-center justify-center">
-  <div class="bg-white rounded-2xl shadow-md p-8 w-full max-w-sm space-y-6">
-    <h1 class="text-2xl font-bold text-center text-gray-800">File Share</h1>
+<main class="flex min-h-screen items-center justify-center bg-gray-100">
+	<div class="w-full max-w-sm space-y-6 rounded-2xl bg-white p-8 shadow-md">
+		<h1 class="text-center text-2xl font-bold text-gray-800">File Share</h1>
 
-    <Button.Root
-      onclick={() => fileInput.click()}
-      class="block w-full text-center bg-blue-500 hover:bg-blue-600 text-white font-medium py-3 rounded-xl transition"
-    >
-      Send a file
-    </Button.Root>
+		<Button.Root
+			onclick={() => fileInput.click()}
+			class="block w-full rounded-xl bg-blue-500 py-3 text-center font-medium text-white transition hover:bg-blue-600"
+		>
+			Send a file
+		</Button.Root>
 
-    <div class="flex items-center gap-2">
-      <hr class="flex-1 border-gray-200" />
-      <span class="text-sm text-gray-400">or receive</span>
-      <hr class="flex-1 border-gray-200" />
-    </div>
+		<div class="flex items-center gap-2">
+			<hr class="flex-1 border-gray-200" />
+			<span class="text-sm text-gray-400">or receive</span>
+			<hr class="flex-1 border-gray-200" />
+		</div>
 
-    <div class="space-y-3">
-      <input
-        bind:value={remoteCode}
-        placeholder="Enter code"
-        class="w-full border border-gray-300 rounded-xl px-4 py-3 text-center font-mono tracking-widest focus:outline-none focus:ring-2 focus:ring-blue-400"
-        onkeydown={(e) => e.key === 'Enter' && join()}
-      />
-      <Button.Root
-        onclick={join}
-        disabled={!remoteCode.trim()}
-        class="w-full bg-green-500 hover:bg-green-600 disabled:opacity-40 text-white font-medium py-3 rounded-xl transition"
-      >
-        Receive
-      </Button.Root>
-    </div>
-  </div>
+		<div class="space-y-3">
+			<input
+				bind:value={remoteCode}
+				placeholder="Enter code"
+				class="w-full rounded-xl border border-gray-300 px-4 py-3 text-center font-mono tracking-widest focus:ring-2 focus:ring-blue-400 focus:outline-none"
+				onkeydown={(e) => e.key === 'Enter' && join()}
+			/>
+			<Button.Root
+				onclick={join}
+				disabled={!remoteCode.trim()}
+				class="w-full rounded-xl bg-green-500 py-3 font-medium text-white transition hover:bg-green-600 disabled:opacity-40"
+			>
+				Receive
+			</Button.Root>
+		</div>
+	</div>
 </main>

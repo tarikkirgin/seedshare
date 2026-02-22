@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import { peer, peerState, transfers } from '$lib/store.svelte';
+	import { peer, session } from '$lib/store.svelte';
 	import { handleIncoming } from '$lib/peer';
+	import { sendRequest } from '$lib/protocol';
 	import * as Registry from '../../registry/registry.remote';
 	import { onMount } from 'svelte';
 
@@ -11,28 +12,22 @@
 		if (!remoteCode) return;
 		const remoteId = await Registry.lookup(remoteCode);
 		if (!remoteId) return;
-
 		const c = peer.connect(remoteId);
-		peerState.conn = c;
-
+		session.conn = c;
 		c.on('open', () => {
-			peerState.connected = true;
-			c.on('data', (data) => handleIncoming(c, transfers, data));
+			session.connected = true;
+			c.on('data', (data) => handleIncoming(c, data));
 		});
 		c.on('close', () => {
-			peerState.connected = false;
-			peerState.conn = null;
+			session.connected = false;
+			session.conn = null;
 		});
 		c.on('error', (err) => console.error(err));
 	}
 
-	function downloadFile(file: File) {
-		const url = URL.createObjectURL(file);
-		const a = document.createElement('a');
-		a.href = url;
-		a.download = file.name;
-		a.click();
-		URL.revokeObjectURL(url);
+	function requestFile(transferId: string) {
+		if (!session.conn) return;
+		sendRequest(session.conn, transferId);
 	}
 
 	onMount(() => {
@@ -46,16 +41,16 @@
 
 		<div class="flex items-center justify-center gap-2">
 			<div
-				class="h-3 w-3 rounded-full {peerState.connected ? 'bg-green-400' : 'bg-yellow-400'}"
+				class="h-3 w-3 rounded-full {session.connected ? 'bg-green-400' : 'bg-yellow-400'}"
 			></div>
 			<span class="text-sm text-gray-600"
-				>{peerState.connected ? 'Connected to sender' : 'Connecting...'}</span
+				>{session.connected ? 'Connected to sender' : 'Connecting...'}</span
 			>
 		</div>
 
-		{#if transfers.size > 0}
+		{#if session.transfers.size > 0}
 			<ul class="space-y-2">
-				{#each Array.from(transfers.values()) as t}
+				{#each Array.from(session.transfers.entries()) as [id, t]}
 					<li class="space-y-2 rounded-xl border border-gray-200 p-3">
 						<div class="flex justify-between text-sm text-gray-700">
 							<span class="truncate">{t.fileName}</span>
@@ -67,14 +62,12 @@
 								style="width: {Math.round((t.receivedBytes / t.fileSize) * 100)}%"
 							></div>
 						</div>
-						{#if t.completedFile}
-							<button
-								onclick={() => downloadFile(t.completedFile!)}
-								class="w-full rounded-lg bg-indigo-500 py-2 text-sm text-white transition hover:bg-indigo-600"
-							>
-								Download
-							</button>
-						{/if}
+						<button
+							onclick={() => requestFile(id)}
+							class="w-full rounded-lg bg-indigo-500 py-2 text-sm text-white transition hover:bg-indigo-600"
+						>
+							Download
+						</button>
 					</li>
 				{/each}
 			</ul>

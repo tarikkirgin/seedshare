@@ -2,6 +2,8 @@ import Peer, { type PeerOptions, type DataConnection } from 'peerjs';
 import * as Protocol from './protocol';
 import { hashFile } from './utils';
 import type { SvelteMap } from 'svelte/reactivity';
+import type { Transfer } from './protocol';
+import { session } from './store.svelte';
 
 export const defaultPeerOptions: PeerOptions = {
 	host: 'localhost',
@@ -39,31 +41,14 @@ export async function sendFile(conn: DataConnection, file: File) {
 	}
 }
 
-export interface Transfer {
-	fileName: string;
-	fileSize: number;
-	chunks: ArrayBuffer[];
-	receivedBytes: number;
-	checksum: string;
-	completedFile?: File;
-}
-
-export function handleIncoming(
-	conn: DataConnection,
-	transfers: SvelteMap<string, Transfer>,
-	data: unknown
-) {
+export function handleIncoming(conn: DataConnection, data: unknown) {
 	if (!conn) return;
 	if (Protocol.isMessage(data)) {
-		handleMessage(conn, transfers, data);
+		handleMessage(conn, data);
 	}
 }
 
-function handleMessage(
-	conn: DataConnection,
-	transfers: SvelteMap<string, Transfer>,
-	message: Protocol.Message
-) {
+function handleMessage(conn: DataConnection, message: Protocol.Message) {
 	const { transferId } = message;
 
 	switch (message.type) {
@@ -76,23 +61,22 @@ function handleMessage(
 				checksum: message.data.checksum
 			};
 
-			transfers.set(transferId, transfer);
+			session.transfers.set(transferId, transfer);
 			break;
 		}
 
 		case Protocol.MessageType.Progress: {
-			const state = transfers.get(transferId);
+			const state = session.transfers.get(transferId);
 			if (state) state.receivedBytes = message.data.bytesReceived;
 			break;
 		}
 
 		case Protocol.MessageType.Data:
-			receiveChunk(conn, transfers, transferId, message.data.chunk);
+			receiveChunk(conn, session.transfers, transferId, message.data.chunk);
 			break;
 
-		case Protocol.MessageType.Complete: {
+		case Protocol.MessageType.Complete:
 			break;
-		}
 
 		case Protocol.MessageType.Cancel:
 			break;
@@ -107,6 +91,13 @@ function handleMessage(
 
 		case Protocol.MessageType.Pong:
 			break;
+
+		case Protocol.MessageType.Request: {
+			const file = session.pendingFiles.get(transferId);
+			if (!file) return;
+			sendFile(conn, file);
+			break;
+		}
 	}
 }
 

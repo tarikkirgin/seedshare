@@ -2,6 +2,15 @@ import { type DataConnection } from 'peerjs';
 
 const CHUNKED = true;
 
+export interface Transfer {
+	fileName: string;
+	fileSize: number;
+	chunks: ArrayBuffer[];
+	receivedBytes: number;
+	checksum: string;
+	completedFile?: File;
+}
+
 export enum MessageType {
 	Metadata = 'metadata',
 	Progress = 'progress',
@@ -10,7 +19,8 @@ export enum MessageType {
 	Ping = 'ping',
 	Pong = 'pong',
 	Error = 'error',
-	Data = 'data'
+	Data = 'data',
+	Request = 'request'
 }
 
 export interface MessageBase {
@@ -128,6 +138,14 @@ export function sendData(conn: DataConnection, transferId: string, data: Message
 	});
 }
 
+export interface MessageRequest extends MessageBase {
+	type: MessageType.Request;
+}
+
+export function sendRequest(conn: DataConnection, transferId: string) {
+	sendMessage(conn, { type: MessageType.Request, transferId, data: null });
+}
+
 export type Message =
 	| MessageMetadata
 	| MessageProgress
@@ -136,7 +154,8 @@ export type Message =
 	| MessagePing
 	| MessagePong
 	| MessageError
-	| MessageData;
+	| MessageData
+	| MessageRequest;
 
 function sendMessage(conn: DataConnection, msg: Message) {
 	conn.send(msg, CHUNKED);
