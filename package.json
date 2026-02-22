@@ -41,6 +41,7 @@
 		"vite-plugin-devtools-json": "^1.0.0"
 	},
 	"dependencies": {
+		"@lucide/svelte": "^0.575.0",
 		"bits-ui": "^2.16.1",
 		"peerjs": "^1.5.5",
 		"valibot": "^1.2.0"

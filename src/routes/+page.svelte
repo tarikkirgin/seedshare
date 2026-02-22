@@ -17,7 +17,8 @@
 					file,
 					name: file.name,
 					size: file.size,
-					checksum: ''
+					type: file.type,
+					hash: ''
 				}
 			])
 		);

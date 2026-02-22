@@ -1,8 +1,9 @@
 import Peer, { type PeerOptions, type DataConnection } from 'peerjs';
 import * as Protocol from './protocol';
 import { hashFile } from './utils';
-import type { SenderFile, FileId } from './types';
+import type { SenderFile, FileId, ReceiverFile } from './types';
 import { session } from './session.svelte';
+import { SvelteMap } from 'svelte/reactivity';
 import * as Registry from '../routes/registry/registry.remote';
 
 export const defaultPeerOptions: PeerOptions = {
@@ -32,7 +33,7 @@ export function setupSender(peer: Peer) {
 				name: f.name,
 				size: f.size,
 				type: f.file.type,
-				checksum: f.checksum
+				hash: f.hash
 			}));
 			Protocol.sendMetadata(conn, files);
 		});
@@ -59,7 +60,6 @@ export async function sendFile(conn: DataConnection, fileId: FileId, senderFile:
 }
 
 export function handleIncoming(conn: DataConnection, data: unknown) {
-	console.log(data);
 	if (!Protocol.isMessage(data)) return;
 	handleMessage(conn, data);
 }
@@ -88,15 +88,15 @@ export async function setupReceiver(peer: Peer, code?: string) {
 function handleMessage(conn: DataConnection, message: Protocol.Message) {
 	switch (message.type) {
 		case Protocol.MessageType.Metadata: {
-			for (const f of message.files) {
-				session.receiverFiles.set(f.id, {
-					name: f.name,
-					size: f.size,
-					checksum: f.checksum,
+			const receiverFiles = new SvelteMap<string, ReceiverFile>();
+			for (const [fileId, fileData] of Object.entries(message.files)) {
+				receiverFiles.set(fileId, {
+					...fileData,
 					receivedBytes: 0,
 					chunks: []
 				});
 			}
+			session.receiverFiles = receiverFiles;
 			break;
 		}
 		case Protocol.MessageType.Progress: {
@@ -150,14 +150,14 @@ async function receiveChunk(conn: DataConnection, fileId: string, chunk: ArrayBu
 
 	const blob = new Blob(file.chunks);
 	const assembledFile = new File([blob], file.name);
-	const checksum = await hashFile(assembledFile);
+	const hash = await hashFile(assembledFile);
 
-	if (checksum === file.checksum) {
-		Protocol.sendComplete(conn, fileId, checksum);
+	if (hash === file.hash) {
+		Protocol.sendComplete(conn, fileId, hash);
 		file.file = assembledFile;
 		console.log('[P2P] File received:', file);
 	} else {
-		console.error('[P2P] Checksum mismatch:', checksum, '!=', file.checksum);
+		console.error('[P2P] Checksum mismatch:', hash, '!=', file.hash);
 		Protocol.sendError(conn, fileId, 'CHECKSUM_MISMATCH', 'File integrity check failed');
 	}
 }

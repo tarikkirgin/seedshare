@@ -31,7 +31,7 @@ peer.on('connection', (conn) => {
 			name: f.name,
 			size: f.size,
 			type: f.file.type,
-			checksum: f.checksum
+			hash: f.hash
 		}));
 		sendMetadata(conn, files);
 	});

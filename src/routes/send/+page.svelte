@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { session } from '$lib/session.svelte';
 	import QRCode from '@castlenine/svelte-qrcode';
-	import FileIcon from '$lib/FileIcon.svelte';
+	import { hashFile } from '$lib/utils';
+	import Icon from '$lib/icon.svelte';
 
 	let fileInput: HTMLInputElement | null = null;
 
@@ -17,11 +18,13 @@
 		if (!target.files || target.files.length === 0) return;
 
 		for (const file of Array.from(target.files)) {
+			const hash = await hashFile(file);
 			session.senderFiles.set(crypto.randomUUID(), {
 				file,
 				name: file.name,
 				size: file.size,
-				checksum: ''
+				type: file.type,
+				hash
 			});
 		}
 
@@ -96,7 +99,7 @@
 						class="flex items-center truncate rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-600"
 					>
 						<div class="mr-2 flex h-4 w-4 items-center justify-center">
-							<FileIcon fileName={file.name} />
+							<Icon mimeType={file.type} />
 						</div>
 						{file.name}
 					</li>

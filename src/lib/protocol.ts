@@ -40,7 +40,7 @@ export interface ProgressMessage {
 export interface CompleteMessage {
 	type: MessageType.Complete;
 	fileId: string;
-	checksum: string;
+	hash: string;
 }
 
 export interface CancelMessage {
@@ -98,8 +98,8 @@ export const sendProgress = (
 	bytesTotal: number
 ) => send(conn, { type: MessageType.Progress, fileId, bytesReceived, bytesTotal });
 
-export const sendComplete = (conn: DataConnection, fileId: string, checksum: string) =>
-	send(conn, { type: MessageType.Complete, fileId, checksum });
+export const sendComplete = (conn: DataConnection, fileId: string, hash: string) =>
+	send(conn, { type: MessageType.Complete, fileId, hash });
 
 export const sendCancel = (conn: DataConnection, fileId: string, reason: string) =>
 	send(conn, { type: MessageType.Cancel, fileId, reason });
