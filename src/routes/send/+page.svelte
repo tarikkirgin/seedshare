@@ -7,7 +7,7 @@
 
 	let copied = false;
 	function handleCopy() {
-		navigator.clipboard.writeText(session.code);
+		navigator.clipboard.writeText(`http://localhost:5173/receive/${session.code}`); // TODO: change to dynamic URL
 		copied = true;
 		setTimeout(() => (copied = false), 1200);
 	}
