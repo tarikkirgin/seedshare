@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { session } from '$lib/session.svelte';
 	import QRCode from '@castlenine/svelte-qrcode';
-	import { hashFile } from '$lib/utils';
+	import { hashFile } from '$lib/peer';
 	import Icon from '$lib/icon.svelte';
 
 	let fileInput: HTMLInputElement | null = null;

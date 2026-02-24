@@ -1,15 +1,13 @@
-export async function hashFile(fileOrBuffer: File | ArrayBuffer): Promise<string> {
-	let arrayBuffer: ArrayBuffer;
+import { type ClassValue, clsx } from 'clsx';
+import { twMerge } from 'tailwind-merge';
 
-	if (fileOrBuffer instanceof File) {
-		arrayBuffer = await fileOrBuffer.arrayBuffer();
-	} else {
-		arrayBuffer = fileOrBuffer;
-	}
-
-	const hashBuffer = await crypto.subtle.digest('SHA-256', arrayBuffer);
-	const hashArray = Array.from(new Uint8Array(hashBuffer));
-	const hashHex = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
-
-	return hashHex;
+export function cn(...inputs: ClassValue[]) {
+	return twMerge(clsx(inputs));
 }
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type WithoutChild<T> = T extends { child?: any } ? Omit<T, 'child'> : T;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type WithoutChildren<T> = T extends { children?: any } ? Omit<T, 'children'> : T;
+export type WithoutChildrenOrChild<T> = WithoutChildren<WithoutChild<T>>;
+export type WithElementRef<T, U extends HTMLElement = HTMLElement> = T & { ref?: U | null };

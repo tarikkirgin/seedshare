@@ -96,6 +96,12 @@
 
 		return File;
 	}
+
+	export function isImage(mimeType: string): boolean {
+		if (!mimeType) return false;
+		const normalized = mimeType.toLowerCase().trim();
+		return normalized.startsWith('image/');
+	}
 </script>
 
 <script lang="ts">
